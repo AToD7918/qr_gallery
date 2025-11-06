@@ -39,11 +39,10 @@
       display: flex;
       height: 100%;
       transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      touch-action: pan-y;
     }
 
     .slider.zoomed {
-      touch-action: pan-x pan-y;
+      transition: none;
     }
     
     .slide {
@@ -63,23 +62,18 @@
       object-fit: contain;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      cursor: zoom-in;
       transition: transform 0.3s ease;
     }
 
     .slide img.zoomed {
-      cursor: zoom-out;
       border-radius: 0;
     }
 
     .slide.zoom-mode {
       overflow: auto;
       -webkit-overflow-scrolling: touch;
-      cursor: grab;
-    }
-
-    .slide.zoom-mode:active {
-      cursor: grabbing;
+      align-items: flex-start;
+      justify-content: flex-start;
     }
     
     .controls {
@@ -213,35 +207,8 @@
       // 이미지 확대/축소 기능
       let isZoomed = false;
       let scale = 1;
-      let panning = false;
-      let pointX = 0;
-      let pointY = 0;
-      let start = { x: 0, y: 0 };
-
-      img.addEventListener('click', (e) => {
-        if (!isZoomed) {
-          // 확대
-          isZoomed = true;
-          scale = 2.5;
-          img.classList.add('zoomed');
-          slide.classList.add('zoom-mode');
-          slider.classList.add('zoomed');
-          
-          // 클릭한 위치를 중심으로 확대
-          const rect = img.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          
-          img.style.transformOrigin = `${x}px ${y}px`;
-          img.style.transform = `scale(${scale})`;
-          
-          // 스와이프 비활성화
-          slider.style.transition = 'none';
-        } else {
-          // 축소
-          resetZoom();
-        }
-      });
+      let currentOriginX = 0;
+      let currentOriginY = 0;
 
       // 더블탭으로 확대/축소
       let lastTap = 0;
@@ -251,8 +218,9 @@
         if (tapLength < 300 && tapLength > 0) {
           e.preventDefault();
           if (!isZoomed) {
+            // 확대
             isZoomed = true;
-            scale = 2.5;
+            scale = 2;
             img.classList.add('zoomed');
             slide.classList.add('zoom-mode');
             slider.classList.add('zoomed');
@@ -262,11 +230,31 @@
             const x = touch.clientX - rect.left;
             const y = touch.clientY - rect.top;
             
+            currentOriginX = x;
+            currentOriginY = y;
+            
             img.style.transformOrigin = `${x}px ${y}px`;
             img.style.transform = `scale(${scale})`;
             slider.style.transition = 'none';
           } else {
-            resetZoom();
+            // 축소 - 현재 보이는 중심점을 기준으로
+            const rect = img.getBoundingClientRect();
+            const slideRect = slide.getBoundingClientRect();
+            
+            // 현재 스크롤 위치를 고려한 중심점 계산
+            const viewCenterX = (slideRect.width / 2) + slide.scrollLeft;
+            const viewCenterY = (slideRect.height / 2) + slide.scrollTop;
+            
+            // 이미지 상의 실제 중심점 (확대 전 좌표계)
+            const imgCenterX = viewCenterX / scale;
+            const imgCenterY = viewCenterY / scale;
+            
+            img.style.transformOrigin = `${imgCenterX}px ${imgCenterY}px`;
+            
+            // 축소 애니메이션을 위한 짧은 지연
+            setTimeout(() => {
+              resetZoom();
+            }, 0);
           }
         }
         lastTap = currentTime;
@@ -279,8 +267,13 @@
         slide.classList.remove('zoom-mode');
         slider.classList.remove('zoomed');
         img.style.transform = 'scale(1)';
-        img.style.transformOrigin = 'center';
         slider.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        
+        // 스크롤 위치 초기화
+        setTimeout(() => {
+          slide.scrollLeft = 0;
+          slide.scrollTop = 0;
+        }, 100);
       }
 
       slide.appendChild(img);
