@@ -69,6 +69,9 @@
       overflow: auto;
       -webkit-overflow-scrolling: touch;
       cursor: grab;
+      display: block;
+      align-items: unset;
+      justify-content: unset;
     }
 
     .image-wrapper.zoom-mode:active {
@@ -83,14 +86,17 @@
       object-fit: contain;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transition: width 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  height 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       display: block;
+      margin: 0;
     }
 
     .slide img.zoomed {
       border-radius: 0;
       max-width: none;
       max-height: none;
+      margin: 0;
     }
     
     .controls {
