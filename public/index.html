@@ -1,0 +1,27 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Menu</title>
+<style>
+  body{margin:0;font-family:system-ui,Arial,sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:16px}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  img{width:100%;height:auto;display:block}
+  .nav{display:flex;gap:8px;justify-content:center;margin:12px 0}
+  button{padding:8px 12px;border:1px solid #ccc;background:#fff;cursor:pointer}
+</style></head><body>
+<div class="wrap">
+  <h1>메뉴</h1>
+  <div class="grid" id="gal"></div>
+  <div class="nav">
+    <button id="prev">이전</button><button id="next">다음</button>
+  </div>
+</div>
+<script>
+  const pages=[["img/p1.jpg","img/p2.jpg","img/p3.jpg","img/p4.jpg","img/p5.jpg","img/p6.jpg","img/p7.jpg"]];
+  let page=0; const gal=document.getElementById('gal');
+  function draw(){ gal.innerHTML=''; for(const src of pages[page]){ const i=new Image(); i.loading="lazy"; i.decoding="async"; i.src=src; gal.appendChild(i);} }
+  draw();
+  document.getElementById('prev').onclick=()=>{ if(page>0){page--;draw();}};
+  document.getElementById('next').onclick=()=>{ if(page<pages.length-1){page++;draw();}};
+</script>
+</body></html>
