@@ -72,6 +72,7 @@
       display: block;
       align-items: unset;
       justify-content: unset;
+      padding: 80px 20px 120px 20px;
     }
 
     .image-wrapper.zoom-mode:active {
@@ -300,8 +301,8 @@
             
             // 터치한 위치가 화면 중앙에 오도록 스크롤
             requestAnimationFrame(() => {
-              const scrollX = (imgTouchX * scale) - touchX;
-              const scrollY = (imgTouchY * scale) - touchY;
+              const scrollX = (imgTouchX * scale) - touchX + 20; // 좌측 패딩 보정
+              const scrollY = (imgTouchY * scale) - touchY + 80; // 상단 패딩 보정
               
               wrapper.scrollLeft = scrollX;
               wrapper.scrollTop = scrollY;
