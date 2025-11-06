@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>메뉴</title>
   <style>
     * {
@@ -13,7 +13,7 @@
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
-      background: #f5f5f5;
+      background: #1a1a1a;
       overflow: hidden;
       height: 100vh;
       width: 100vw;
@@ -25,29 +25,14 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
-      background: #fff;
-    }
-    
-    .header {
-      padding: 16px 20px;
-      background: #fff;
-      border-bottom: 1px solid #e0e0e0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      z-index: 10;
-    }
-    
-    .header h1 {
-      font-size: 20px;
-      font-weight: 600;
-      color: #222;
-      text-align: center;
+      background: #1a1a1a;
     }
     
     .slider-container {
       flex: 1;
       position: relative;
       overflow: hidden;
-      background: #fff;
+      background: #1a1a1a;
     }
     
     .slider {
@@ -77,12 +62,13 @@
     }
     
     .controls {
-      position: absolute;
-      bottom: 0;
+      position: fixed;
+      bottom: env(safe-area-inset-bottom, 20px);
       left: 0;
       right: 0;
       padding: 20px;
-      background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -127,8 +113,8 @@
     }
     
     .dots {
-      position: absolute;
-      bottom: 80px;
+      position: fixed;
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px));
       left: 50%;
       transform: translateX(-50%);
       display: flex;
@@ -151,10 +137,6 @@
     }
 
     @media (max-width: 480px) {
-      .header h1 {
-        font-size: 18px;
-      }
-      
       .slide {
         padding: 10px;
       }
@@ -163,15 +145,15 @@
         width: 44px;
         height: 44px;
       }
+      
+      .controls {
+        padding-bottom: calc(15px + env(safe-area-inset-bottom, 0px));
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>메뉴판</h1>
-    </div>
-    
     <div class="slider-container">
       <div class="slider" id="slider"></div>
       
