@@ -1,27 +1,292 @@
-<!doctype html><html lang="ko"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Menu</title>
-<style>
-  body{margin:0;font-family:system-ui,Arial,sans-serif}
-  .wrap{max-width:960px;margin:0 auto;padding:16px}
-  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  img{width:100%;height:auto;display:block}
-  .nav{display:flex;gap:8px;justify-content:center;margin:12px 0}
-  button{padding:8px 12px;border:1px solid #ccc;background:#fff;cursor:pointer}
-</style></head><body>
-<div class="wrap">
-  <h1>메뉴</h1>
-  <div class="grid" id="gal"></div>
-  <div class="nav">
-    <button id="prev">이전</button><button id="next">다음</button>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>메뉴</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+      background: #f5f5f5;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+    
+    .container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+    
+    .header {
+      padding: 16px 20px;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      z-index: 10;
+    }
+    
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #222;
+      text-align: center;
+    }
+    
+    .slider-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #fff;
+    }
+    
+    .slider {
+      display: flex;
+      height: 100%;
+      transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      touch-action: pan-y;
+    }
+    
+    .slide {
+      min-width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .slide img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 20px;
+      background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 5;
+    }
+    
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.95);
+      border: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: all 0.2s;
+      color: #333;
+      font-weight: bold;
+    }
+    
+    .nav-btn:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 1);
+    }
+    
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    
+    .counter {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .dots {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 5;
+    }
+    
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      transition: all 0.3s;
+    }
+    
+    .dot.active {
+      background: #fff;
+      width: 24px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 18px;
+      }
+      
+      .slide {
+        padding: 10px;
+      }
+      
+      .nav-btn {
+        width: 44px;
+        height: 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>메뉴판</h1>
+    </div>
+    
+    <div class="slider-container">
+      <div class="slider" id="slider"></div>
+      
+      <div class="dots" id="dots"></div>
+      
+      <div class="controls">
+        <button class="nav-btn" id="prevBtn">◀</button>
+        <div class="counter" id="counter"></div>
+        <button class="nav-btn" id="nextBtn">▶</button>
+      </div>
+    </div>
   </div>
-</div>
-<script>
-  const pages=[["img/p1.jpg","img/p2.jpg","img/p3.jpg","img/p4.jpg","img/p5.jpg","img/p6.jpg","img/p7.jpg"]];
-  let page=0; const gal=document.getElementById('gal');
-  function draw(){ gal.innerHTML=''; for(const src of pages[page]){ const i=new Image(); i.loading="lazy"; i.decoding="async"; i.src=src; gal.appendChild(i);} }
-  draw();
-  document.getElementById('prev').onclick=()=>{ if(page>0){page--;draw();}};
-  document.getElementById('next').onclick=()=>{ if(page<pages.length-1){page++;draw();}};
-</script>
-</body></html>
+
+  <script>
+    const images = [
+      'img/photo.jpg',
+      'img/photo1.jpg'
+    ];
+
+    let currentIndex = 0;
+    const slider = document.getElementById('slider');
+    const dots = document.getElementById('dots');
+    const counter = document.getElementById('counter');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // 슬라이드 생성
+    images.forEach((src, index) => {
+      const slide = document.createElement('div');
+      slide.className = 'slide';
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = `메뉴 ${index + 1}`;
+      img.loading = index === 0 ? 'eager' : 'lazy';
+      slide.appendChild(img);
+      slider.appendChild(slide);
+
+      // 도트 생성
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      if (index === 0) dot.classList.add('active');
+      dots.appendChild(dot);
+    });
+
+    function updateSlider() {
+      slider.style.transform = `translateX(-${currentIndex * 100}%)`;
+      counter.textContent = `${currentIndex + 1} / ${images.length}`;
+      
+      // 도트 업데이트
+      document.querySelectorAll('.dot').forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentIndex);
+      });
+
+      // 버튼 상태 업데이트
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.disabled = currentIndex === images.length - 1;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateSlider();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentIndex < images.length - 1) {
+        currentIndex++;
+        updateSlider();
+      }
+    });
+
+    // 터치 스와이프 기능
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    slider.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    slider.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const swipeThreshold = 50;
+      const diff = touchStartX - touchEndX;
+
+      if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0 && currentIndex < images.length - 1) {
+          // 왼쪽 스와이프 (다음)
+          currentIndex++;
+          updateSlider();
+        } else if (diff < 0 && currentIndex > 0) {
+          // 오른쪽 스와이프 (이전)
+          currentIndex--;
+          updateSlider();
+        }
+      }
+    }
+
+    // 키보드 네비게이션
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        currentIndex--;
+        updateSlider();
+      } else if (e.key === 'ArrowRight' && currentIndex < images.length - 1) {
+        currentIndex++;
+        updateSlider();
+      }
+    });
+
+    // 초기화
+    updateSlider();
+  </script>
+</body>
+</html>
