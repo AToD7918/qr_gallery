@@ -41,6 +41,10 @@
       transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       touch-action: pan-y;
     }
+
+    .slider.zoomed {
+      touch-action: pan-x pan-y;
+    }
     
     .slide {
       min-width: 100%;
@@ -48,7 +52,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 10px;
     }
     
     .slide img {
@@ -58,7 +62,24 @@
       height: auto;
       object-fit: contain;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      cursor: zoom-in;
+      transition: transform 0.3s ease;
+    }
+
+    .slide img.zoomed {
+      cursor: zoom-out;
+      border-radius: 0;
+    }
+
+    .slide.zoom-mode {
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      cursor: grab;
+    }
+
+    .slide.zoom-mode:active {
+      cursor: grabbing;
     }
     
     .controls {
@@ -188,6 +209,80 @@
       img.src = src;
       img.alt = `메뉴 ${index + 1}`;
       img.loading = index === 0 ? 'eager' : 'lazy';
+      
+      // 이미지 확대/축소 기능
+      let isZoomed = false;
+      let scale = 1;
+      let panning = false;
+      let pointX = 0;
+      let pointY = 0;
+      let start = { x: 0, y: 0 };
+
+      img.addEventListener('click', (e) => {
+        if (!isZoomed) {
+          // 확대
+          isZoomed = true;
+          scale = 2.5;
+          img.classList.add('zoomed');
+          slide.classList.add('zoom-mode');
+          slider.classList.add('zoomed');
+          
+          // 클릭한 위치를 중심으로 확대
+          const rect = img.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          img.style.transformOrigin = `${x}px ${y}px`;
+          img.style.transform = `scale(${scale})`;
+          
+          // 스와이프 비활성화
+          slider.style.transition = 'none';
+        } else {
+          // 축소
+          resetZoom();
+        }
+      });
+
+      // 더블탭으로 확대/축소
+      let lastTap = 0;
+      img.addEventListener('touchend', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        if (tapLength < 300 && tapLength > 0) {
+          e.preventDefault();
+          if (!isZoomed) {
+            isZoomed = true;
+            scale = 2.5;
+            img.classList.add('zoomed');
+            slide.classList.add('zoom-mode');
+            slider.classList.add('zoomed');
+            
+            const touch = e.changedTouches[0];
+            const rect = img.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            img.style.transformOrigin = `${x}px ${y}px`;
+            img.style.transform = `scale(${scale})`;
+            slider.style.transition = 'none';
+          } else {
+            resetZoom();
+          }
+        }
+        lastTap = currentTime;
+      });
+
+      function resetZoom() {
+        isZoomed = false;
+        scale = 1;
+        img.classList.remove('zoomed');
+        slide.classList.remove('zoom-mode');
+        slider.classList.remove('zoomed');
+        img.style.transform = 'scale(1)';
+        img.style.transformOrigin = 'center';
+        slider.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      }
+
       slide.appendChild(img);
       slider.appendChild(slide);
 
@@ -229,14 +324,28 @@
     // 터치 스와이프 기능
     let touchStartX = 0;
     let touchEndX = 0;
+    let isSwiping = false;
 
     slider.addEventListener('touchstart', (e) => {
+      // 확대된 상태에서는 스와이프 비활성화
+      if (slider.classList.contains('zoomed')) return;
+      
       touchStartX = e.changedTouches[0].screenX;
+      isSwiping = true;
+    }, { passive: true });
+
+    slider.addEventListener('touchmove', (e) => {
+      if (!isSwiping || slider.classList.contains('zoomed')) return;
     }, { passive: true });
 
     slider.addEventListener('touchend', (e) => {
+      // 확대된 상태에서는 스와이프 비활성화
+      if (slider.classList.contains('zoomed')) return;
+      if (!isSwiping) return;
+      
       touchEndX = e.changedTouches[0].screenX;
       handleSwipe();
+      isSwiping = false;
     }, { passive: true });
 
     function handleSwipe() {
