@@ -52,6 +52,27 @@
       align-items: center;
       justify-content: center;
       padding: 10px;
+      position: relative;
+    }
+
+    .image-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .image-wrapper.zoom-mode {
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      cursor: grab;
+    }
+
+    .image-wrapper.zoom-mode:active {
+      cursor: grabbing;
     }
     
     .slide img {
@@ -62,18 +83,14 @@
       object-fit: contain;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: transform 0.3s ease;
+      transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      display: block;
     }
 
     .slide img.zoomed {
       border-radius: 0;
-    }
-
-    .slide.zoom-mode {
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
-      align-items: flex-start;
-      justify-content: flex-start;
+      max-width: none;
+      max-height: none;
     }
     
     .controls {
@@ -199,6 +216,10 @@
     images.forEach((src, index) => {
       const slide = document.createElement('div');
       slide.className = 'slide';
+      
+      const wrapper = document.createElement('div');
+      wrapper.className = 'image-wrapper';
+      
       const img = document.createElement('img');
       img.src = src;
       img.alt = `메뉴 ${index + 1}`;
@@ -206,77 +227,100 @@
       
       // 이미지 확대/축소 기능
       let isZoomed = false;
-      let scale = 1;
-      let currentOriginX = 0;
-      let currentOriginY = 0;
+      let imgNaturalWidth = 0;
+      let imgNaturalHeight = 0;
+      let imgDisplayWidth = 0;
+      let imgDisplayHeight = 0;
+
+      // 이미지 로드 완료 시 크기 저장
+      img.addEventListener('load', () => {
+        imgNaturalWidth = img.naturalWidth;
+        imgNaturalHeight = img.naturalHeight;
+        updateDisplaySize();
+      });
+
+      function updateDisplaySize() {
+        if (!isZoomed) {
+          const rect = img.getBoundingClientRect();
+          imgDisplayWidth = rect.width;
+          imgDisplayHeight = rect.height;
+        }
+      }
 
       // 더블탭으로 확대/축소
       let lastTap = 0;
-      img.addEventListener('touchend', (e) => {
+      let tapTimeout = null;
+
+      wrapper.addEventListener('touchend', (e) => {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTap;
+        
         if (tapLength < 300 && tapLength > 0) {
+          // 더블탭 감지
           e.preventDefault();
+          clearTimeout(tapTimeout);
+          
           if (!isZoomed) {
             // 확대
+            const touch = e.changedTouches[0];
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const imgRect = img.getBoundingClientRect();
+            
+            // 터치 위치 (wrapper 기준)
+            const touchX = touch.clientX - wrapperRect.left;
+            const touchY = touch.clientY - wrapperRect.top;
+            
+            // 이미지 내부의 터치 위치 (이미지 기준)
+            const imgTouchX = touch.clientX - imgRect.left;
+            const imgTouchY = touch.clientY - imgRect.top;
+            
+            // 현재 이미지 크기
+            const currentWidth = imgRect.width;
+            const currentHeight = imgRect.height;
+            
+            // 확대 후 크기 (2배)
+            const scale = 2;
+            const newWidth = currentWidth * scale;
+            const newHeight = currentHeight * scale;
+            
             isZoomed = true;
-            scale = 2;
             img.classList.add('zoomed');
-            slide.classList.add('zoom-mode');
+            wrapper.classList.add('zoom-mode');
             slider.classList.add('zoomed');
             
-            const touch = e.changedTouches[0];
-            const rect = img.getBoundingClientRect();
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
+            // 이미지 크기를 2배로 설정
+            img.style.width = newWidth + 'px';
+            img.style.height = newHeight + 'px';
             
-            currentOriginX = x;
-            currentOriginY = y;
+            // 터치한 위치가 화면 중앙에 오도록 스크롤
+            requestAnimationFrame(() => {
+              const scrollX = (imgTouchX * scale) - touchX;
+              const scrollY = (imgTouchY * scale) - touchY;
+              
+              wrapper.scrollLeft = scrollX;
+              wrapper.scrollTop = scrollY;
+            });
             
-            img.style.transformOrigin = `${x}px ${y}px`;
-            img.style.transform = `scale(${scale})`;
-            slider.style.transition = 'none';
           } else {
-            // 축소 - 현재 보이는 중심점을 기준으로
-            const rect = img.getBoundingClientRect();
-            const slideRect = slide.getBoundingClientRect();
+            // 축소
+            isZoomed = false;
+            img.classList.remove('zoomed');
+            wrapper.classList.remove('zoom-mode');
+            slider.classList.remove('zoomed');
             
-            // 현재 스크롤 위치를 고려한 중심점 계산
-            const viewCenterX = (slideRect.width / 2) + slide.scrollLeft;
-            const viewCenterY = (slideRect.height / 2) + slide.scrollTop;
+            img.style.width = '';
+            img.style.height = '';
             
-            // 이미지 상의 실제 중심점 (확대 전 좌표계)
-            const imgCenterX = viewCenterX / scale;
-            const imgCenterY = viewCenterY / scale;
-            
-            img.style.transformOrigin = `${imgCenterX}px ${imgCenterY}px`;
-            
-            // 축소 애니메이션을 위한 짧은 지연
-            setTimeout(() => {
-              resetZoom();
-            }, 0);
+            wrapper.scrollLeft = 0;
+            wrapper.scrollTop = 0;
           }
         }
-        lastTap = currentTime;
-      });
-
-      function resetZoom() {
-        isZoomed = false;
-        scale = 1;
-        img.classList.remove('zoomed');
-        slide.classList.remove('zoom-mode');
-        slider.classList.remove('zoomed');
-        img.style.transform = 'scale(1)';
-        slider.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
         
-        // 스크롤 위치 초기화
-        setTimeout(() => {
-          slide.scrollLeft = 0;
-          slide.scrollTop = 0;
-        }, 100);
-      }
+        lastTap = currentTime;
+      }, { passive: false });
 
-      slide.appendChild(img);
+      wrapper.appendChild(img);
+      slide.appendChild(wrapper);
       slider.appendChild(slide);
 
       // 도트 생성
