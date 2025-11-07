@@ -7,3 +7,6 @@ __pycache__/
 
 # Temp rename folder
 public/img/_temp_rename/
+
+# Generated QR codes
+qr_codes/
