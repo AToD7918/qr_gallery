@@ -10,19 +10,23 @@
       padding: 0;
       box-sizing: border-box;
     }
+
+    :root {
+      --bottom-ui: 0px; /* JS에서 갱신 */
+    }
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
       background: #1a1a1a;
       overflow: hidden;
-      height: 100vh;
+      height: 100dvh;  /* 100vh → 100dvh */
       width: 100vw;
     }
     
     .container {
       position: relative;
       width: 100%;
-      height: 100vh;
+      height: 100dvh; /* 100vh → 100dvh */
       display: flex;
       flex-direction: column;
       background: #1a1a1a;
@@ -33,12 +37,14 @@
       position: relative;
       overflow: hidden;
       background: #1a1a1a;
+      height: 100dvh; /* 100vh → 100dvh */
     }
     
     .slider {
       display: flex;
       height: 100%;
       transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      align-items: flex-start; /* 가용 높이 상단 기준 정렬 */
     }
 
     .slider.zoomed {
@@ -47,7 +53,7 @@
     
     .slide {
       min-width: 100%;
-      height: 100%;
+      height: calc(100dvh - var(--bottom-ui)); /* 하단 UI 제외한 가용 높이 */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -219,6 +225,18 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
 
+    // 하단 UI(controls + dots) 높이만큼 CSS 변수 갱신
+    function updateBottomUI() {
+      const controlsEl = document.querySelector('.controls');
+      const controlsH = controlsEl ? controlsEl.offsetHeight : 0;
+
+      // .dots는 bottom: calc(80px + safe-area)로 고정. 시각적 여백 포함해 80 기준 가산.
+      const dotsOffset = 80;
+      const reserved = controlsH + dotsOffset;
+
+      document.documentElement.style.setProperty('--bottom-ui', reserved + 'px');
+    }
+
     // 슬라이드 생성
     images.forEach((src, index) => {
       const slide = document.createElement('div');
@@ -263,7 +281,6 @@
         const tapLength = currentTime - lastTap;
         
         if (tapLength < 300 && tapLength > 0) {
-          // 더블탭 감지
           e.preventDefault();
           clearTimeout(tapTimeout);
           
@@ -273,19 +290,14 @@
             const wrapperRect = wrapper.getBoundingClientRect();
             const imgRect = img.getBoundingClientRect();
             
-            // 터치 위치 (wrapper 기준)
             const touchX = touch.clientX - wrapperRect.left;
             const touchY = touch.clientY - wrapperRect.top;
-            
-            // 이미지 내부의 터치 위치 (이미지 기준)
             const imgTouchX = touch.clientX - imgRect.left;
             const imgTouchY = touch.clientY - imgRect.top;
             
-            // 현재 이미지 크기
             const currentWidth = imgRect.width;
             const currentHeight = imgRect.height;
             
-            // 확대 후 크기 (2배)
             const scale = 2;
             const newWidth = currentWidth * scale;
             const newHeight = currentHeight * scale;
@@ -295,11 +307,9 @@
             wrapper.classList.add('zoom-mode');
             slider.classList.add('zoomed');
             
-            // 이미지 크기를 2배로 설정
             img.style.width = newWidth + 'px';
             img.style.height = newHeight + 'px';
             
-            // 터치한 위치가 화면 중앙에 오도록 스크롤
             requestAnimationFrame(() => {
               const scrollX = (imgTouchX * scale) - touchX + 20; // 좌측 패딩 보정
               const scrollY = (imgTouchY * scale) - touchY + 80; // 상단 패딩 보정
@@ -420,8 +430,14 @@
       }
     });
 
+    // 리사이즈·회전 시 하단 UI 재계산
+    window.addEventListener('load', updateBottomUI);
+    window.addEventListener('resize', updateBottomUI);
+    window.addEventListener('orientationchange', updateBottomUI);
+
     // 초기화
     updateSlider();
+    updateBottomUI(); // 하단 UI 보정값 적용
   </script>
 </body>
 </html>
