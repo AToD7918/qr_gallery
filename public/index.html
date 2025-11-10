@@ -177,13 +177,15 @@
           if (!isZoomed) {
             // 확대
             const touch = e.changedTouches[0];
-            const wrapperRect = wrapper.getBoundingClientRect();
             const imgRect = img.getBoundingClientRect();
             
-            const touchX = touch.clientX - wrapperRect.left;
-            const touchY = touch.clientY - wrapperRect.top;
-            const imgTouchX = touch.clientX - imgRect.left;
-            const imgTouchY = touch.clientY - imgRect.top;
+            // 터치한 위치 (뷰포트 기준)
+            const touchClientX = touch.clientX;
+            const touchClientY = touch.clientY;
+            
+            // 이미지 내에서 터치한 상대적 위치 (0~1 비율)
+            const relativeX = (touchClientX - imgRect.left) / imgRect.width;
+            const relativeY = (touchClientY - imgRect.top) / imgRect.height;
             
             const currentWidth = imgRect.width;
             const currentHeight = imgRect.height;
@@ -201,11 +203,14 @@
             img.style.height = newHeight + 'px';
             
             requestAnimationFrame(() => {
-              const scrollX = (imgTouchX * scale) - touchX;
-              const scrollY = (imgTouchY * scale) - touchY;
+              // 확대된 이미지에서 같은 비율 위치를 계산
+              const targetX = newWidth * relativeX;
+              const targetY = newHeight * relativeY;
               
-              wrapper.scrollLeft = scrollX;
-              wrapper.scrollTop = scrollY;
+              // 터치한 지점이 화면 중앙에 오도록 스크롤
+              const wrapperRect = wrapper.getBoundingClientRect();
+              wrapper.scrollLeft = targetX - (touchClientX - wrapperRect.left);
+              wrapper.scrollTop = targetY - (touchClientY - wrapperRect.top);
             });
             
           } else {
