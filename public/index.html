@@ -11,16 +11,14 @@
       box-sizing: border-box;
     }
 
-    :root {
-      --bottom-ui: 0px; /* JS에서 갱신 */
-    }
-    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
       background: #1a1a1a;
       overflow: hidden;
       height: 100dvh;  /* 100vh → 100dvh */
       width: 100vw;
+      -webkit-user-select: none;
+      user-select: none;
     }
     
     .container {
@@ -53,11 +51,11 @@
     
     .slide {
       min-width: 100%;
-      height: calc(100dvh - var(--bottom-ui)); /* 하단 UI 제외한 가용 높이 */
+      height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 10px;
+      padding: 0;
       position: relative;
     }
 
@@ -78,7 +76,7 @@
       display: block;
       align-items: unset;
       justify-content: unset;
-      padding: 80px 20px 120px 20px;
+      padding: 0;
     }
 
     .image-wrapper.zoom-mode:active {
@@ -86,13 +84,11 @@
     }
     
     .slide img {
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
-      height: auto;
+      width: 100%;
+      height: 100dvh;
       object-fit: contain;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border-radius: 0;
+      box-shadow: none;
       transition: width 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94),
                   height 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       display: block;
@@ -104,96 +100,7 @@
       max-width: none;
       max-height: none;
       margin: 0;
-    }
-    
-    .controls {
-      position: fixed;
-      bottom: env(safe-area-inset-bottom, 20px);
-      left: 0;
-      right: 0;
-      padding: 20px;
-      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 5;
-    }
-    
-    .nav-btn {
-      background: rgba(255, 255, 255, 0.95);
-      border: none;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      transition: all 0.2s;
-      color: #333;
-      font-weight: bold;
-    }
-    
-    .nav-btn:active {
-      transform: scale(0.95);
-      background: rgba(255, 255, 255, 1);
-    }
-    
-    .nav-btn:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-    
-    .counter {
-      background: rgba(255, 255, 255, 0.95);
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    
-    .dots {
-      position: fixed;
-      bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 8px;
-      z-index: 5;
-    }
-    
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.5);
-      transition: all 0.3s;
-    }
-    
-    .dot.active {
-      background: #fff;
-      width: 24px;
-      border-radius: 4px;
-    }
-
-    @media (max-width: 480px) {
-      .slide {
-        padding: 10px;
-      }
-      
-      .nav-btn {
-        width: 44px;
-        height: 44px;
-      }
-      
-      .controls {
-        padding-bottom: calc(15px + env(safe-area-inset-bottom, 0px));
-      }
+      object-fit: contain;
     }
   </style>
 </head>
@@ -201,14 +108,6 @@
   <div class="container">
     <div class="slider-container">
       <div class="slider" id="slider"></div>
-      
-      <div class="dots" id="dots"></div>
-      
-      <div class="controls">
-        <button class="nav-btn" id="prevBtn">◀</button>
-        <div class="counter" id="counter"></div>
-        <button class="nav-btn" id="nextBtn">▶</button>
-      </div>
     </div>
   </div>
 
@@ -221,21 +120,11 @@
 
     let currentIndex = 0;
     const slider = document.getElementById('slider');
-    const dots = document.getElementById('dots');
-    const counter = document.getElementById('counter');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
 
-    // 하단 UI(controls + dots) 높이만큼 CSS 변수 갱신
-    function updateBottomUI() {
-      const controlsEl = document.querySelector('.controls');
-      const controlsH = controlsEl ? controlsEl.offsetHeight : 0;
-
-      // 값을 줄이면 이미지가 내려감.
-      const dotsOffset = 20;
-      const reserved = controlsH + dotsOffset;
-
-      document.documentElement.style.setProperty('--bottom-ui', reserved + 'px');
+    // 모바일 브라우저 주소창 숨김
+    function hideAddressBar() {
+      window.scrollTo(0, 1);
+      setTimeout(() => window.scrollTo(0, 0), 0);
     }
 
     // 슬라이드 생성
@@ -312,8 +201,8 @@
             img.style.height = newHeight + 'px';
             
             requestAnimationFrame(() => {
-              const scrollX = (imgTouchX * scale) - touchX + 20; // 좌측 패딩 보정
-              const scrollY = (imgTouchY * scale) - touchY + 80; // 상단 패딩 보정
+              const scrollX = (imgTouchX * scale) - touchX;
+              const scrollY = (imgTouchY * scale) - touchY;
               
               wrapper.scrollLeft = scrollX;
               wrapper.scrollTop = scrollY;
@@ -340,41 +229,11 @@
       wrapper.appendChild(img);
       slide.appendChild(wrapper);
       slider.appendChild(slide);
-
-      // 도트 생성
-      const dot = document.createElement('div');
-      dot.className = 'dot';
-      if (index === 0) dot.classList.add('active');
-      dots.appendChild(dot);
     });
 
     function updateSlider() {
       slider.style.transform = `translateX(-${currentIndex * 100}%)`;
-      counter.textContent = `${currentIndex + 1} / ${images.length}`;
-      
-      // 도트 업데이트
-      document.querySelectorAll('.dot').forEach((dot, index) => {
-        dot.classList.toggle('active', index === currentIndex);
-      });
-
-      // 버튼 상태 업데이트
-      prevBtn.disabled = currentIndex === 0;
-      nextBtn.disabled = currentIndex === images.length - 1;
     }
-
-    prevBtn.addEventListener('click', () => {
-      if (currentIndex > 0) {
-        currentIndex--;
-        updateSlider();
-      }
-    });
-
-    nextBtn.addEventListener('click', () => {
-      if (currentIndex < images.length - 1) {
-        currentIndex++;
-        updateSlider();
-      }
-    });
 
     // 터치 스와이프 기능
     let touchStartX = 0;
@@ -431,14 +290,15 @@
       }
     });
 
-    // 리사이즈·회전 시 하단 UI 재계산
-    window.addEventListener('load', updateBottomUI);
-    window.addEventListener('resize', updateBottomUI);
-    window.addEventListener('orientationchange', updateBottomUI);
-
-    // 초기화
-    updateSlider();
-    updateBottomUI(); // 하단 UI 보정값 적용
+    // 초기화 및 주소창 숨김
+    window.addEventListener('load', () => {
+      hideAddressBar();
+      updateSlider();
+    });
+    
+    // 스크롤 시 주소창 재숨김
+    window.addEventListener('scroll', hideAddressBar);
+    window.addEventListener('orientationchange', hideAddressBar);
   </script>
 </body>
 </html>
